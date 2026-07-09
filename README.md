@@ -418,9 +418,3 @@ npx perfetto-analyzer uninstall
 ```
 
 Remove a skill de todos os diretórios dos agentes suportados.
-
----
-
-## Licença
-
-MIT
