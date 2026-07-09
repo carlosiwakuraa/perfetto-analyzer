@@ -1,0 +1,57 @@
+duration_ms: __DURATION_MS__
+
+# Heap profiling nativo (C/C++/Rust via heapprofd)
+buffers {
+  size_kb: 65536
+  fill_policy: RING_BUFFER
+}
+
+data_sources {
+  config {
+    name: "android.heapprofd"
+    heapprofd_config {
+      sampling_interval_bytes: 8192
+      process_cmdline: "__PACKAGE__"
+      shmem_size_bytes: 8388608
+      block_client: false
+      all_heaps: true
+    }
+  }
+}
+
+# Heap dumps Java/Kotlin (ART)
+data_sources {
+  config {
+    name: "android.java_hprof"
+    java_hprof_config {
+      process_cmdline: "__PACKAGE__"
+      dump_smaps: true
+    }
+  }
+}
+
+# Contadores de memória do sistema
+data_sources {
+  config {
+    name: "linux.sys_stats"
+    sys_stats_config {
+      meminfo_period_ms: 1000
+      meminfo_counters: MEMINFO_MEM_TOTAL
+      meminfo_counters: MEMINFO_MEM_FREE
+      meminfo_counters: MEMINFO_MEM_AVAILABLE
+      meminfo_counters: MEMINFO_CACHED
+    }
+  }
+}
+
+# Ftrace para rastrear eventos de memória
+data_sources {
+  config {
+    name: "linux.ftrace"
+    ftrace_config {
+      ftrace_events: "mm_event/mm_event_record"
+      ftrace_events: "lowmemorykiller/lowmemory_kill"
+      ftrace_events: "oom/mark_victim"
+    }
+  }
+}

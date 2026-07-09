@@ -1,0 +1,62 @@
+duration_ms: __DURATION_MS__
+
+buffers {
+  size_kb: 65536
+  fill_policy: RING_BUFFER
+}
+
+# Android Frame Timeline (Android 12+ / API 31+)
+data_sources {
+  config {
+    name: "android.surfaceflinger.frametimeline"
+  }
+}
+
+# Ftrace com ATrace categories (formato compatível com Perfetto v25+)
+data_sources {
+  config {
+    name: "linux.ftrace"
+    ftrace_config {
+      ftrace_events: "sched/sched_switch"
+      ftrace_events: "sched/sched_wakeup"
+      ftrace_events: "drm/drm_vblank_event"
+      ftrace_events: "gpu_mem/gpu_mem_total"
+      atrace_categories: "gfx"
+      atrace_categories: "view"
+      atrace_categories: "wm"
+      atrace_categories: "am"
+      atrace_categories: "input"
+      atrace_categories: "res"
+      atrace_categories: "dalvik"
+      atrace_apps: "__PACKAGE__"
+    }
+  }
+}
+
+# CPU callstack sampling a 60 Hz — identifica qual função causou cada frame drop
+data_sources {
+  config {
+    name: "linux.perf"
+    perf_event_config {
+      timebase {
+        frequency: 60
+        counter: SW_CPU_CLOCK
+      }
+      callstack_sampling {
+        scope {
+          target_cmdline: "__PACKAGE__"
+        }
+        kernel_frames: true
+      }
+    }
+  }
+}
+
+data_sources {
+  config {
+    name: "linux.process_stats"
+    process_stats_config {
+      scan_all_processes_on_start: true
+    }
+  }
+}

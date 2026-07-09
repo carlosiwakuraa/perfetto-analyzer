@@ -1,0 +1,65 @@
+duration_ms: __DURATION_MS__
+
+buffers {
+  size_kb: 32768
+  fill_policy: RING_BUFFER
+}
+
+# Contadores de bateria do Android
+data_sources {
+  config {
+    name: "android.power"
+    android_power_config {
+      battery_poll_ms: 1000
+      battery_counters: BATTERY_COUNTER_CAPACITY_PERCENT
+      battery_counters: BATTERY_COUNTER_CHARGE
+      battery_counters: BATTERY_COUNTER_CURRENT
+      battery_counters: BATTERY_COUNTER_VOLTAGE
+      collect_power_rails: true
+    }
+  }
+}
+
+# CPU callstack sampling a 60 Hz — identifica qual código do app drena a bateria
+data_sources {
+  config {
+    name: "linux.perf"
+    perf_event_config {
+      timebase {
+        frequency: 60
+        counter: SW_CPU_CLOCK
+      }
+      callstack_sampling {
+        scope {
+          target_cmdline: "__PACKAGE__"
+        }
+        kernel_frames: true
+      }
+    }
+  }
+}
+
+# Wakelock tracking
+data_sources {
+  config {
+    name: "linux.ftrace"
+    ftrace_config {
+      ftrace_events: "power/wakeup_source_activate"
+      ftrace_events: "power/wakeup_source_deactivate"
+      ftrace_events: "power/suspend_resume"
+      ftrace_events: "power/cpu_frequency"
+      ftrace_events: "power/cpu_idle"
+    }
+  }
+}
+
+# System stats para correlação
+data_sources {
+  config {
+    name: "linux.sys_stats"
+    sys_stats_config {
+      stat_period_ms: 1000
+      stat_counters: STAT_CPU_TIMES
+    }
+  }
+}
