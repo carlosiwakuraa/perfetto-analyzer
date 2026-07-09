@@ -77,6 +77,66 @@ def severity_emoji(s):
 JVM_NOISE = {"RuntimeInit", "ZygoteInit", "NativeStart", "Looper.loop"}
 
 
+def _correlations(trace_type, recommendations):
+    """Sugere traces complementares com base no tipo atual e nos problemas encontrados."""
+    if trace_type == "all":
+        return []
+
+    categories = {r.get("category") for r in recommendations}
+    titles = " ".join(r.get("title", "") for r in recommendations)
+    suggestions = []
+
+    if trace_type == "cpu":
+        if "Recomposição" in titles or "Compose" in titles:
+            suggestions.append((
+                "frames",
+                "Correlacionar recomposições com drops reais — o trace de frames mostra se as "
+                "recomposições detectadas aqui estão de fato causando frames janked visíveis.",
+            ))
+        if "cpu" in categories:
+            suggestions.append((
+                "memory",
+                "Verificar se heap churn está pressionando a CPU — GC frequente aparece como "
+                "picos de CPU; o trace de memória confirma alocações excessivas nos mesmos hot paths.",
+            ))
+
+    elif trace_type == "frames":
+        if "frames" in categories:
+            suggestions.append((
+                "cpu",
+                "Identificar a callstack responsável pelos drops — o trace de CPU a 60 Hz mostra "
+                "exatamente qual função estava rodando durante cada deadline miss.",
+            ))
+
+    elif trace_type == "memory":
+        if "memory" in categories:
+            suggestions.append((
+                "cpu",
+                "Localizar os hotspots de alocação no callstack — o trace de CPU revela quais "
+                "funções disparam as alocações identificadas aqui.",
+            ))
+            suggestions.append((
+                "frames",
+                "Verificar se o churn de memória/GC está causando jank — pausas de GC aparecem "
+                "como frames dropados no trace de frames.",
+            ))
+
+    elif trace_type == "battery":
+        suggestions.append((
+            "cpu",
+            "Identificar quais funções consomem mais CPU e drenam a bateria — o trace de CPU "
+            "mapeia o gasto energético a callstacks específicos.",
+        ))
+        if recommendations:
+            suggestions.append((
+                "all",
+                "Trace completo para correlação total — combina CPU, frames e memória para uma "
+                "visão unificada do drain.",
+            ))
+
+    return suggestions
+
+
 def generate_report(data, package, trace_type):
     now = datetime.now().strftime("%Y-%m-%d %H:%M")
     duration = data.get("trace_duration_seconds", 0)
@@ -357,11 +417,16 @@ def generate_report(data, package, trace_type):
         lines += ["Nenhum problema detectado automaticamente. Revise o trace manualmente no [Perfetto UI](https://perfetto.dev/ui).", ""]
 
     # Próximos Passos
-    lines += [
-        "---",
-        "",
-        "## Próximos Passos",
-        "",
+    correlations = _correlations(trace_type, recommendations)
+
+    next_steps = ["---", "", "## Próximos Passos", ""]
+
+    if correlations:
+        for next_type, reason in correlations:
+            next_steps.append(f"- [ ] **Trace `{next_type}`** — {reason}")
+        next_steps.append("")
+
+    next_steps += [
         "- [ ] Abrir o arquivo `.pb` em [perfetto.dev/ui](https://perfetto.dev/ui) para análise visual",
         "- [ ] Usar o SQL Explorer do Perfetto UI para queries customizadas",
         "- [ ] Correlacionar picos de CPU/memória com interações do usuário na timeline",
@@ -371,6 +436,8 @@ def generate_report(data, package, trace_type):
         "",
         f"*Gerado por perfetto-analyzer em {now}*",
     ]
+
+    lines += next_steps
 
     return "\n".join(lines)
 

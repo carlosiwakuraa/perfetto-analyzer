@@ -1,5 +1,21 @@
 # Changelog
 
+## [1.0.4] - 2026-07-09
+
+### Adicionado
+- **`generate_report.py`** — Seção "Próximos Passos" agora inclui sugestões de traces de correlação automáticas quando fazem sentido:
+  - `cpu` com Compose: sugere `frames` para confirmar se as recomposições causam drops reais
+  - `cpu` com problemas: sugere `memory` para verificar heap churn nos mesmos hot paths
+  - `frames` com jank: sugere `cpu` para identificar a callstack durante o deadline miss
+  - `memory` com problemas: sugere `cpu` (hotspots de alocação) e `frames` (GC causando jank)
+  - `battery` com problemas: sugere `cpu` e `all`
+  - Trace tipo `all`: nenhuma sugestão (já captura tudo)
+
+## [1.0.3] - 2026-07-09
+
+### Corrigido
+- **`parse_perfetto_pb.py`** — Dados de frames vazios em devices físicos. O fallback para Android < 12 usava correspondência exata do nome do slice (`'Choreographer#doFrame'`), mas em muitos devices físicos o nome vem com sufixo de frame number (`'Choreographer#doFrame 12345'`). Corrigido usando `LIKE 'Choreographer#doFrame%'` e `LIKE '%DrawFrame%'`.
+
 ## [1.0.2] - 2026-07-09
 
 ### Corrigido

@@ -1,6 +1,6 @@
 {
   "name": "perfetto-analyzer",
-  "version": "1.0.2",
+  "version": "1.0.4",
   "description": "AI skill for Android performance analysis using Perfetto — works with Claude Code, Cursor, GitHub Copilot, Codex, Antigravity and Devin",
   "bin": {
     "perfetto-analyzer": "bin/cli.js"

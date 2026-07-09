@@ -164,12 +164,16 @@ def extract_frames(tp):
     """)
 
     if not frames:
+        # Fallback para Android < 12 ou devices sem frame timeline.
+        # O nome do slice varia por versão: 'Choreographer#doFrame', 'Choreographer#doFrame 12345', etc.
         frames = query_to_dicts(tp, """
             SELECT
                 s.name,
                 s.dur / 1e6 AS duration_ms
             FROM slice s
-            WHERE s.name IN ('Choreographer#doFrame', 'DrawFrame', 'doFrame')
+            WHERE s.name LIKE 'Choreographer#doFrame%'
+               OR s.name LIKE '%DrawFrame%'
+               OR s.name = 'doFrame'
             ORDER BY s.ts
             LIMIT 5000
         """)
