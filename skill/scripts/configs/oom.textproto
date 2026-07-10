@@ -1,0 +1,25 @@
+buffers: {
+    size_kb: 524288
+    fill_policy: DISCARD
+}
+
+data_sources: {
+    config {
+        name: "android.java_hprof.oom"
+        java_hprof_config {
+            process_cmdline: "__PACKAGE__"
+        }
+    }
+}
+
+# Dispara automaticamente ao detectar java.lang.OutOfMemoryError
+# no processo monitorado. Para o trace 500ms após a detecção
+# para garantir que o heap dump seja capturado.
+trigger_config {
+    trigger_mode: STOP_TRACING
+    triggers {
+        name: "com.android.telemetry.art-outofmemory"
+        stop_delay_ms: 500
+    }
+    trigger_timeout_ms: 3600000
+}
