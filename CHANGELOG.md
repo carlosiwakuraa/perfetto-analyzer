@@ -1,5 +1,25 @@
 # Changelog
 
+## [1.0.6] - 2026-07-09
+
+### Corrigido
+- **`skill/CHANGELOG.md`** — CHANGELOG.md agora é instalado junto com a skill em `~/.claude/skills/perfetto-analyzer/CHANGELOG.md`, tornando a versão instalada visível sem precisar acessar o pacote npm.
+
+## [1.0.5] - 2026-07-09
+
+### Adicionado
+- **`parse_perfetto_pb.py`** — Nova função `extract_thread_states()` que analisa a tabela `thread_state` do Perfetto: detecta I/O síncrono (estado `D` — uninterruptible sleep com `blocked_function`) e contenção de locks Java (slices de Monitor) por thread do app. Dado ausente nos traces anteriores que agora resolve o padrão "app travou mas o profiler não mostra nada".
+- **`parse_perfetto_pb.py`** — Nova função `extract_cpu_megacycles()` usando o stdlib module `linux.cpu.utilization.process` (Android 12+). Retorna `[]` silenciosamente em versões anteriores.
+- **`scripts/configs/oom.textproto`** — Novo tipo de trace `oom`: captura heap dump automaticamente ao momento do `OutOfMemoryError` via trigger `android.java_hprof.oom`. Aguarda até 1h o crash acontecer.
+- **`analyze_metrics.py`** — Nova função `analyze_thread_states()` que gera issue `critical` quando a main thread está em I/O síncrono >10ms e `warning` para contenção de lock >5ms.
+- **`generate_report.py`** — Nova seção **"Contenção de Threads"** na seção CPU com tabelas separadas para I/O bloqueante e Monitor contention.
+- **`generate_report.py`** — Nova seção **"CPU Megacycles por Processo"** exibida quando disponível (Android 12+).
+- **`collect_trace.py`** — Suporte ao tipo `oom`: modo especial sem countdown, aguarda o crash via Ctrl+C para cancelar.
+
+### Referências (cookbooks do Perfetto que inspiraram estas melhorias)
+- [Android Trace Analysis](https://perfetto.dev/docs/getting-started/android-trace-analysis)
+- [Android OOM](https://perfetto.dev/docs/case-studies/android-outofmemoryerror)
+
 ## [1.0.4] - 2026-07-09
 
 ### Adicionado
